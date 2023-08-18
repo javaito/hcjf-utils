@@ -9,6 +9,7 @@
     <artifactId>hcjf-utils</artifactId>
     <version>0.0.1-beta</version>
     <packaging>jar</packaging>
+    <description>Library with the layer implementation and service definition fot the Holanda Catalina architecture definition</description>
     <url>https://github.com/javaito/hcjf-utils</url>
     <developers>
         <developer>
