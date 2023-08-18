@@ -92,7 +92,7 @@ public abstract class Layer implements LayerInterface {
 
     /**
      * This method return true if the layer instance is overwritable for other instance
-     * whit the same name.
+     * with the same name.
      * @return True if the layer is overwritable or false in otherwise.
      */
     public boolean isOverwritable() {
