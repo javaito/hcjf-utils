@@ -11,6 +11,8 @@ import java.util.function.Function;
  * This class implements the map interface to wrap some other instance of map,
  * and maintains the entries into the map some time and then the elements are removed.
  * @author javaito
+ * @param <K> Expected key data type.
+ * @param <V> Expected value data type.
  */
 public final class TtlMap<K extends Object, V extends Object> extends TtlCollection<K> implements Map<K,V> {
 

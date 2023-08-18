@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 
+/**
+ * Class with some statics method to work with json structures.
+ */
 public class JsonUtils {
 
     private static final Gson gson;
@@ -82,10 +85,21 @@ public class JsonUtils {
         return value;
     }
 
+    /**
+     * Create a json structure from an object instance.
+     * @param object Object instance.
+     * @return Json structure.
+     */
     public static JsonElement toJsonTree(Object object) {
         return gson.toJsonTree(object);
     }
 
+    /**
+     * Create a json structure from an object instance.
+     * @param object Object instance.
+     * @param formatOptions Format options map.
+     * @return Json structure.
+     */
     public static JsonElement toJsonTree(Object object, Map<String, Object> formatOptions) {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(JsonSerializer.class, (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context) -> {

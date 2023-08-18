@@ -9,6 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
+ * Wrapper of map to been parseable as bson
  * @author javaito
  */
 public class BsonParcelableMap implements BsonParcelable, Map<String,Object> {

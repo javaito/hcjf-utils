@@ -12,6 +12,7 @@ import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 
 /**
+ * Cryptography wrapper.
  * @author Andres Medina
  */
 public class Cryptography {

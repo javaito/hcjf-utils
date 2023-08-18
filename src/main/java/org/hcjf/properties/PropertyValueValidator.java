@@ -3,7 +3,7 @@ package org.hcjf.properties;
 /**
  * This interface define the validators for the values of the properties.
  * @author javaito
- *
+ * @param <O> Expected object type
  */
 public interface PropertyValueValidator<O extends Object> {
 

@@ -3,8 +3,8 @@ package org.hcjf.log;
 import org.hcjf.utils.Messages;
 
 /**
+ * Associates some code to a string message
  * @author javaito
- *
  */
 public final class LogMessages extends Messages {
 

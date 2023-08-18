@@ -6,6 +6,7 @@ import org.hcjf.layers.LayerInterface;
 /**
  * This kind of layers provides a custom way to create a instance from a bson document.
  * @author javaito
+ * @param <P> Bson parcelable type
  */
 public interface BsonCustomBuilderLayer<P extends BsonParcelable> extends LayerInterface {
 

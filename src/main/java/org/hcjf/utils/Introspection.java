@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 /**
  * This class contains a set of utilities to optimize the introspection native methods.
  * @author javaito
- *
  */
 public final class Introspection {
 
@@ -36,7 +35,7 @@ public final class Introspection {
     private static final Map<Class, Map<String, Accessors>> accessorsCache = new HashMap<>();
 
     /**
-     * If the value is an instance of map or collection the the method returns a deep copy of the object, if the value
+     * If the value is an instance of map or collection the method returns a deep copy of the object, if the value
      * si an instance of other object then returns the same value.
      * @param value Value to make the copy.
      * @param <O> Expected return type.
@@ -360,6 +359,12 @@ public final class Introspection {
         return instance;
     }
 
+    /**
+     * Try to set the value into instance structure using a path as address.
+     * @param instance Instance, this object could be a map, collection, array or a bean object with getters and setters.
+     * @param path Path to set the value.
+     * @param value Value instance.
+     */
     public static void set(Object instance, String path, Object value) {
         Object bean = instance;
 
@@ -732,6 +737,11 @@ public final class Introspection {
         private final Map<Class<? extends Annotation>, List<Annotation>> annotationsMap;
         private boolean containsPermission;
 
+        /**
+         * Invoker constructor.
+         * @param implementationClass Implementation class.
+         * @param method Method instance.
+         */
         public Invoker(Class implementationClass, Method method) {
             this.implementationClass = implementationClass;
             this.method = method;
@@ -838,8 +848,6 @@ public final class Introspection {
          * @param instance Instance to get the method.
          * @param params Method parameters.
          * @return Invocation result.
-         * @throws InvocationTargetException Invocation Target Exception
-         * @throws IllegalAccessException Illegal Access Exception
          */
         public Object invoke(Object instance, Object... params) {
             if(containsPermission) {
@@ -871,6 +879,12 @@ public final class Introspection {
         private final Getter getter;
         private final Setter setter;
 
+        /**
+         * Accessor constructor.
+         * @param resourceName Resource name.
+         * @param getter Getter instance.
+         * @param setter Setter instance.
+         */
         public Accessors(String resourceName, Getter getter, Setter setter) {
             this.resourceName = resourceName;
             this.getter = getter;
@@ -990,6 +1004,12 @@ public final class Introspection {
 
         private final String resourceName;
 
+        /**
+         * Accessor constructor.
+         * @param implementationClass Implementation class.
+         * @param resourceName Resource name.
+         * @param method Method instance.
+         */
         protected Accessor(Class implementationClass, String resourceName, Method method) {
             super(implementationClass, method);
             this.resourceName = resourceName;
@@ -1007,7 +1027,7 @@ public final class Introspection {
     }
 
     /**
-     * Sub class of the accessor that represents only the getter accessors.
+     * Subclass of the accessor that represents only the getter accessors.
      */
     public static class Getter extends Accessor {
 
@@ -1016,6 +1036,12 @@ public final class Introspection {
         private final Class returnKeyType;
         private final Class returnCollectionType;
 
+        /**
+         * Getter constructor.
+         * @param implementationClass Implementation class.
+         * @param resourceName Resource name.
+         * @param method Method instance.
+         */
         public Getter(Class implementationClass, String resourceName, Method method) {
             super(implementationClass, resourceName, method);
             returnType = method.getReturnType();
@@ -1062,8 +1088,6 @@ public final class Introspection {
          * @param instance Instance to do reflection.
          * @param <O> Expected result type for the client.
          * @return Resource value.
-         * @throws InvocationTargetException Invocation target exception.
-         * @throws IllegalAccessException Illegal access exception.
          */
         public <O extends Object> O get(Object instance) {
             return (O) invoke(instance);
@@ -1105,7 +1129,7 @@ public final class Introspection {
     }
 
     /**
-     * Sub class of the accessor that represents only the setter accessors.
+     * Subclass of the accessor that represents only the setter accessors.
      */
     public static class Setter extends Accessor {
 
@@ -1114,6 +1138,12 @@ public final class Introspection {
         private final Class parameterKeyType;
         private final Class parameterCollectionType;
 
+        /**
+         * Setter constructor.
+         * @param implementationClass Implementation class.
+         * @param resourceName Resource name.
+         * @param method Method instance.
+         */
         public Setter(Class implementationClass, String resourceName, Method method) {
             super(implementationClass, resourceName, method);
             this.parameterType = method.getParameterTypes()[0];
@@ -1160,8 +1190,6 @@ public final class Introspection {
          * Reflection invoked by the underlying method to set the resource value.
          * @param instance Instance to do reflection.
          * @param value Parameter value.
-         * @throws InvocationTargetException Invocation target exception.
-         * @throws IllegalAccessException Illegal access exception.
          */
         public void set(Object instance, Object value) {
             invoke(instance, value);
@@ -1235,6 +1263,12 @@ public final class Introspection {
         private final I invoker;
         private final String[] aliases;
 
+        /**
+         * Invoker entry constructor.
+         * @param key Key value.
+         * @param invoker Invoker instance.
+         * @param aliases Array with aliases.
+         */
         public InvokerEntry(String key, I invoker, String... aliases) {
             this.key = key;
             this.invoker = invoker;

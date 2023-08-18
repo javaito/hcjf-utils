@@ -10,6 +10,11 @@ public class Agent {
     private final String packageName;
     private final String name;
 
+    /**
+     * Agent constructor.
+     * @param name Name of the agent.
+     * @param packageName Package name.
+     */
     public Agent(String name, String packageName) {
         this.packageName = packageName;
         this.name = name;

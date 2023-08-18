@@ -3,6 +3,7 @@ package org.hcjf.layers.plugins;
 import org.hcjf.layers.Layer;
 
 /**
+ * Layer that are used as plugin
  * @author javaito
  */
 public abstract class PluginLayer extends Layer {

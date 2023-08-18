@@ -8,7 +8,9 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
+ * Set implementation with a time to live for each element.
  * @author javaito
+ * @param <V> Expected object type.
  */
 public class TtlSet<V extends Object> extends TtlCollection<V> implements Set<V> {
 

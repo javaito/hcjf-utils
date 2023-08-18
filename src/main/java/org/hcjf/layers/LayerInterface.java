@@ -5,8 +5,8 @@ import org.hcjf.layers.distributed.DistributedLayer;
 import java.lang.reflect.InvocationHandler;
 
 /**
+ * Layer interface definition
  * @author javaito
- *
  */
 public interface LayerInterface extends InvocationHandler {
 

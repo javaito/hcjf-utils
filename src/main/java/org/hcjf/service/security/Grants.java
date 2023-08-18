@@ -5,6 +5,7 @@ import org.hcjf.utils.bson.BsonParcelable;
 import java.util.*;
 
 /**
+ * Grants singleton.
  * @author javaito
  */
 public final class Grants {

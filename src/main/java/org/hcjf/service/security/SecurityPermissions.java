@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Class to represents permissions into the vm
  * @author javaito.
  */
 public class SecurityPermissions {
@@ -23,7 +24,7 @@ public class SecurityPermissions {
     }
 
     /**
-     * Creates a identifier using the name of the class that publish the permission
+     * Creates an identifier using the name of the class that publish the permission
      * and the name of permission.
      * @param className Class that publish the permission.
      * @param permissionName Name of the permission.

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Plugin record
  * @author javaito
  */
 public final class Plugin {

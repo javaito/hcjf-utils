@@ -8,6 +8,7 @@ import java.util.Map;
  * This class provides the mechanism to maintains the wrapped collection
  * elements into the collection some time.
  * @author javaito
+ * @param <K> Expected data type.
  */
 public abstract class TtlCollection<K extends Object> {
 

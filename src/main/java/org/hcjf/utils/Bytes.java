@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Class with some method to work with bytes.
  * @author javaito
  */
 public class Bytes {
