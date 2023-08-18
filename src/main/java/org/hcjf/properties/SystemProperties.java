@@ -175,10 +175,12 @@ public final class SystemProperties extends Properties {
         defaults.put(Log.TRUNCATE_TAG_SIZE, "35");
         defaults.put(Log.LOG_CONSUMERS_SIZE, "50");
 
+        defaults.put(Service.STATIC_VIRTUAL_THREAD_POOL, "true");
         defaults.put(Service.STATIC_THREAD_NAME, "StaticServiceThread");
         defaults.put(Service.STATIC_THREAD_POOL_CORE_SIZE, "2");
         defaults.put(Service.STATIC_THREAD_POOL_MAX_SIZE, "200");
         defaults.put(Service.STATIC_THREAD_POOL_KEEP_ALIVE_TIME, "10");
+        defaults.put(Service.VIRTUAL_THREAD_POOL, "true");
         defaults.put(Service.THREAD_POOL_CORE_SIZE, "10");
         defaults.put(Service.THREAD_POOL_MAX_SIZE, "100");
         defaults.put(Service.THREAD_POOL_KEEP_ALIVE_TIME, "10");
