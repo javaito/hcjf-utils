@@ -7,7 +7,7 @@
     <name>Holanda Catalina Utils</name>
     <groupId>com.github.javaito</groupId>
     <artifactId>hcjf-utils</artifactId>
-    <version>0.0.3-beta</version>
+    <version>0.0.4-beta</version>
     <packaging>jar</packaging>
     <description>Library with the layer implementation and service definition fot the Holanda Catalina architecture definition</description>
     <url>https://github.com/javaito/hcjf-utils</url>
