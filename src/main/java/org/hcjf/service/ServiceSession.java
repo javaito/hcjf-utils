@@ -277,7 +277,7 @@ public class ServiceSession implements Comparable {
      * @return Layer stack.
      */
     public final Collection<LayerStackElement> getLayerStack() {
-        //Verify if this instance is a current session of is a identity
+        //Verify if this instance is a current session of is an identity
 
         return Collections.unmodifiableCollection(ServiceSession.getCurrentSession().layerStack.get(Thread.currentThread().threadId()));
     }
