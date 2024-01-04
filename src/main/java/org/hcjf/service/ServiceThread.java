@@ -180,6 +180,7 @@ public class ServiceThread {
         ServiceThread instance = serviceThreadInstances.get(threadId);
         if (instance == null) {
             instance = new ServiceThread(threadId);
+            instance.setSession(ServiceSession.getGuestSession());
             serviceThreadInstances.put(threadId, instance);
         }
         return instance;
