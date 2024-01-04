@@ -113,11 +113,6 @@ public class ServiceThread {
         this.initialAllocatedMemory = initialAllocatedMemory;
     }
 
-    public final Long getAccumulatedAllocatedMemory() {
-        return ((ThreadMXBean)ManagementFactory.getThreadMXBean()).
-                getThreadAllocatedBytes(Thread.currentThread().threadId()) - getInitialAllocatedMemory();
-    }
-
     /**
      * Returns the initial thread time counter when the current service session starts.
      * @return Initial thread time counter.
@@ -160,12 +155,6 @@ public class ServiceThread {
             setInitialAllocatedMemory(((ThreadMXBean)ManagementFactory.getThreadMXBean()).
                     getThreadAllocatedBytes(Thread.currentThread().threadId()));
             setInitialTime(ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime());
-
-            //Init the max allocated memory value for thread
-            configureMaxAllocatedMemory(SystemProperties.getLong(SystemProperties.Service.MAX_ALLOCATED_MEMORY_FOR_THREAD));
-
-            //Init the max execution time value for thread
-            configureMaxExecutionTime(SystemProperties.getLong(SystemProperties.Service.MAX_EXECUTION_TIME_FOR_THREAD));
         }
 
         this.session = session;
@@ -180,45 +169,10 @@ public class ServiceThread {
         ServiceThread instance = serviceThreadInstances.get(threadId);
         if (instance == null) {
             instance = new ServiceThread(threadId);
-            instance.session = ServiceSession.getGuestSession();
             serviceThreadInstances.put(threadId, instance);
+            instance.setSession(ServiceSession.getGuestSession());
         }
         return instance;
-    }
-
-    /**
-     * This method configure the max allocated memory for the current thread.
-     * This configuration will be reset when the thread finalize with the current service session.
-     * If in the system properties the 'expressed in percentage flag' is true then this
-     * values will be considered as a percentage in the otherwise this value will be
-     * considered as an amount of bytes.
-     * @param maxAllocatedMemory Max allocated memory value.
-     */
-    public static void configureMaxAllocatedMemory(Long maxAllocatedMemory) {
-        if(SystemProperties.getBoolean(SystemProperties.Service.MAX_ALLOCATED_MEMORY_EXPRESSED_IN_PERCENTAGE)) {
-            if(maxAllocatedMemory == null || maxAllocatedMemory < 1 || maxAllocatedMemory > 100) {
-                maxAllocatedMemory = Runtime.getRuntime().maxMemory();
-            } else {
-                maxAllocatedMemory = (maxAllocatedMemory * Runtime.getRuntime().maxMemory()) / 100;
-            }
-        } else {
-            if(maxAllocatedMemory == null || maxAllocatedMemory < 1 || maxAllocatedMemory > Runtime.getRuntime().maxMemory()) {
-                maxAllocatedMemory = Runtime.getRuntime().maxMemory();
-            }
-        }
-        getServiceThreadInstance().setMaxAllocatedMemory(maxAllocatedMemory);
-    }
-
-    /**
-     * This method configure the max time of execution for the current thread.
-     * This value are expressed in milliseconds.
-     * @param maxExecutionTime Max execution time value.
-     */
-    public static void configureMaxExecutionTime(Long maxExecutionTime) {
-        if(maxExecutionTime == null || maxExecutionTime < 1) {
-            maxExecutionTime = Long.MAX_VALUE;
-        }
-        getServiceThreadInstance().setMaxExecutionTime(maxExecutionTime);
     }
 
     /**
@@ -231,38 +185,4 @@ public class ServiceThread {
         }
     }
 
-    /**
-     * Verify if the current thread allocate more bytes that the max configured.
-     */
-    public static void checkAllocatedMemory() {
-        ServiceThread serviceThread = getServiceThreadInstance();
-        if(serviceThread.getAccumulatedAllocatedMemory() > serviceThread.getMaxAllocatedMemory()) {
-
-            //Reset the initial value for the current thread in order to
-            //continue with the throwable handling
-            serviceThread.setInitialAllocatedMemory(((ThreadMXBean)ManagementFactory.getThreadMXBean()).
-                    getThreadAllocatedBytes(Thread.currentThread().threadId()));
-
-            if(SystemProperties.getBoolean(SystemProperties.Service.MAX_ALLOCATED_MEMORY_EXCEEDED_THROWS_EXCEPTION)) {
-                throw new RuntimeException("Max memory allocated for thread exceeded");
-            } else {
-                Log.w(SystemProperties.get("SERVICE_THREAD"), "Max memory allocated for thread exceeded");
-            }
-        }
-    }
-
-    /**
-     * Verify if the current thread use more time that the max configured.
-     */
-    public static void checkExecutionTime() {
-        ServiceThread serviceThread = getServiceThreadInstance();
-        if(serviceThread.getAccumulatedTime() > serviceThread.getMaxExecutionTime()) {
-
-            //Reset the initial value for the current thread in order to
-            //continue with the throwable handling
-            serviceThread.setInitialTime(ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime());
-
-            throw new RuntimeException("Max execution time for thread exceeded");
-        }
-    }
 }

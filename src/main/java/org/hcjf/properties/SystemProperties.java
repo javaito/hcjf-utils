@@ -4,8 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import org.hcjf.log.Log;
+import org.hcjf.utils.Introspection;
 import org.hcjf.utils.JsonUtils;
 
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
@@ -108,6 +111,8 @@ public final class SystemProperties extends Properties {
         public static final String MAX_ALLOCATED_MEMORY_EXCEEDED_THROWS_EXCEPTION = "max.allocated.memory.exceeded.throws.exception";
     }
 
+    private static final String PROPERTY_PACKAGE = "org.hcjf.properties";
+
     //Java property names
     public static final String FILE_ENCODING = "file.encoding";
 
@@ -115,10 +120,22 @@ public final class SystemProperties extends Properties {
 
     static {
         instance = new SystemProperties();
+        for (Class clazz : Introspection.getClasses(PROPERTY_PACKAGE)) {
+            if (!clazz.equals(DefaultProperties.class) && DefaultProperties.class.isAssignableFrom(clazz)) {
+                try {
+                    DefaultProperties defaultProperties = (DefaultProperties) clazz.getConstructor().newInstance();
+                    instance.putAll(defaultProperties.getDefaults());
+                } catch (Exception e) {
+                    System.out.println("Unable to load properties from " + clazz.getName());
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private final Map<String, Object> instancesCache;
     private final Gson gson;
+
 
     private SystemProperties() {
         super(new Properties());

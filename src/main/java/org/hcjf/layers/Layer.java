@@ -2,8 +2,6 @@ package org.hcjf.layers;
 
 import org.hcjf.errors.HCJFSecurityException;
 import org.hcjf.layers.plugins.PluginLayer;
-import org.hcjf.log.debug.Agent;
-import org.hcjf.log.debug.Agents;
 import org.hcjf.service.ServiceSession;
 import org.hcjf.service.ServiceThread;
 import org.hcjf.service.security.Permission;
@@ -40,7 +38,6 @@ public abstract class Layer implements LayerInterface {
                 SynchronizedCountOperation.getMeanOperation(), 1000L);
         this.errorMean = new SynchronizedCountOperation(
                 SynchronizedCountOperation.getMeanOperation(), 1000L);
-        Agents.register(new LayerAgent(this));
     }
 
     public Layer(String implName) {
@@ -139,8 +136,6 @@ public abstract class Layer implements LayerInterface {
      */
     private void analyzeThread() throws Throwable {
         ServiceThread.checkInterruptedThread();
-        ServiceThread.checkAllocatedMemory();
-        ServiceThread.checkExecutionTime();
     }
 
     /**
@@ -282,45 +277,4 @@ public abstract class Layer implements LayerInterface {
         }
     }
 
-    public interface LayerAgentMBean {
-
-        String getLayerName();
-        Double getInvocationMean();
-        Double getErrorMean();
-        Double getExecutionTimeMean();
-
-    }
-
-    public static final class LayerAgent extends Agent implements LayerAgentMBean {
-
-        private static final String PACKAGE_NAME = Layer.class.getPackageName();
-        private static final String NAME_TEMPLATE = "%s$%s";
-
-        private final Layer layer;
-
-        public LayerAgent(Layer layer) {
-            super(String.format(NAME_TEMPLATE, layer.getClass().getSimpleName(), layer.getImplName()), PACKAGE_NAME);
-            this.layer = layer;
-        }
-
-        @Override
-        public String getLayerName() {
-            return layer.getImplName();
-        }
-
-        @Override
-        public Double getInvocationMean() {
-            return layer.invocationMean.getCurrentValue();
-        }
-
-        @Override
-        public Double getErrorMean() {
-            return layer.errorMean.getCurrentValue();
-        }
-
-        @Override
-        public Double getExecutionTimeMean() {
-            return layer.executionTimeMean.getCurrentValue();
-        }
-    }
 }

@@ -6,8 +6,11 @@ import org.hcjf.service.security.LazyPermission;
 import org.hcjf.service.security.Permission;
 import org.hcjf.service.security.SecurityPermissions;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -728,6 +731,56 @@ public final class Introspection {
             return result1;
         });
         return Collections.unmodifiableMap(result);
+    }
+
+    /**
+     * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+     * @param packageName Base package
+     * @return List with all the classes founded into the package
+     */
+    public static List<Class<?>> getClasses(String packageName) {
+        try {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            String path = packageName.replace(Strings.CLASS_SEPARATOR, Strings.SLASH);
+            Enumeration<URL> resources = classLoader.getResources(path);
+            List<File> folders = new ArrayList<>();
+            while (resources.hasMoreElements()) {
+                URL resource = resources.nextElement();
+                folders.add(new File(resource.getFile()));
+            }
+            List<Class<?>> classes = new ArrayList<>();
+            for (File directory : folders) {
+                classes.addAll(findClasses(directory, packageName));
+            }
+            return classes;
+        } catch (Exception ex) {
+            throw new HCJFRuntimeException("Unable to obtain classes");
+        }
+    }
+
+    /**
+     * Recursive method used to find all classes in a given folder and sub-folders.
+     * @param folder Base folder
+     * @param packageName The package name for classes found inside the base folder
+     * @return List with all the classes founded into the package
+     */
+    private static List findClasses(File folder, String packageName) {
+        List classes = new ArrayList();
+        if (!folder.exists()) {
+            return classes;
+        }
+        File[] files = folder.listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                assert !file.getName().contains(".");
+                classes.addAll(findClasses(file, packageName + "." + file.getName()));
+            } else if (file.getName().endsWith(".class")) {
+                try {
+                    classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6)));
+                } catch (Exception ex){}
+            }
+        }
+        return classes;
     }
 
     public static abstract class Invoker {

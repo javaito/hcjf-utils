@@ -3,8 +3,6 @@ package org.hcjf.service;
 import org.hcjf.errors.HCJFRuntimeException;
 import org.hcjf.errors.HCJFServiceTimeoutException;
 import org.hcjf.log.Log;
-import org.hcjf.log.debug.Agent;
-import org.hcjf.log.debug.Agents;
 import org.hcjf.properties.SystemProperties;
 
 import java.util.*;
@@ -22,8 +20,8 @@ public abstract class Service<C extends ServiceConsumer> {
     private static final String MAIN_EXECUTOR_NAME = "Main Thread Pool %s";
 
     private final String serviceName;
-    private final ThreadPoolExecutor serviceExecutor;
-    private final Map<String, ThreadPoolExecutor> registeredExecutors;
+    private final ExecutorService serviceExecutor;
+    private final Map<String, ExecutorService> registeredExecutors;
     private final Integer priority;
 
     /**
@@ -42,13 +40,15 @@ public abstract class Service<C extends ServiceConsumer> {
 
         this.serviceName = serviceName;
         this.priority = priority;
-        if (SystemProperties.getBoolean(SystemProperties.Service.VIRTUAL_THREAD_POOL)) {
-            this.serviceExecutor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-            this.serviceExecutor.setCorePoolSize(SystemProperties.getInteger(SystemProperties.Service.THREAD_POOL_CORE_SIZE));
-            this.serviceExecutor.setMaximumPoolSize(SystemProperties.getInteger(SystemProperties.Service.THREAD_POOL_MAX_SIZE));
-            this.serviceExecutor.setKeepAliveTime(SystemProperties.getLong(SystemProperties.Service.THREAD_POOL_KEEP_ALIVE_TIME), TimeUnit.SECONDS);
+        if (!SystemProperties.getBoolean(SystemProperties.Service.VIRTUAL_THREAD_POOL)) {
+
+            ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+            threadPoolExecutor.setCorePoolSize(SystemProperties.getInteger(SystemProperties.Service.THREAD_POOL_CORE_SIZE));
+            threadPoolExecutor.setMaximumPoolSize(SystemProperties.getInteger(SystemProperties.Service.THREAD_POOL_MAX_SIZE));
+            threadPoolExecutor.setKeepAliveTime(SystemProperties.getLong(SystemProperties.Service.THREAD_POOL_KEEP_ALIVE_TIME), TimeUnit.SECONDS);
+            this.serviceExecutor = threadPoolExecutor;
         } else {
-            this.serviceExecutor = (ThreadPoolExecutor) Executors.newVirtualThreadPerTaskExecutor();
+            this.serviceExecutor = Executors.newVirtualThreadPerTaskExecutor();
         }
         this.registeredExecutors = new HashMap<>();
         init();
@@ -57,15 +57,13 @@ public abstract class Service<C extends ServiceConsumer> {
         } else {
             SystemServices.instance.setLog((Log)this);
         }
-
-        Agents.register(new ThreadPoolAgent(String.format(MAIN_EXECUTOR_NAME, serviceName), serviceExecutor));
     }
 
     /**
      * Return the internal thread pool threadPoolExecutor of the service.
      * @return Thread pool threadPoolExecutor.
      */
-    private ThreadPoolExecutor getServiceExecutor() {
+    private ExecutorService getServiceExecutor() {
         return serviceExecutor;
     }
 
@@ -84,7 +82,7 @@ public abstract class Service<C extends ServiceConsumer> {
      * @param executorName Executor name.
      * @param executor Executor instance.
      */
-    private void registerExecutor(String executorName, ThreadPoolExecutor executor) {
+    private void registerExecutor(String executorName, ExecutorService executor) {
         if(!executor.equals(serviceExecutor)) {
             if(executorName == null) {
                 throw new NullPointerException("Executor name is null");
@@ -92,8 +90,6 @@ public abstract class Service<C extends ServiceConsumer> {
             synchronized (this) {
                 if (!registeredExecutors.containsKey(executorName)) {
                     registeredExecutors.put(executorName, executor);
-
-                    Agents.register(new ThreadPoolAgent(executorName, executor));
                 }
             }
         }
@@ -130,7 +126,7 @@ public abstract class Service<C extends ServiceConsumer> {
      * @param <R> Expected return type.
      * @return Callable's future.
      */
-    protected final <R extends Object> Future<R> fork(Callable<R> callable, String executorName, ThreadPoolExecutor executor) {
+    protected final <R extends Object> Future<R> fork(Callable<R> callable, String executorName, ExecutorService executor) {
         registerExecutor(executorName, executor);
         return executor.submit(new CallableWrapper<>(callable, getSession(), getInvokerProperties()));
     }
@@ -152,7 +148,7 @@ public abstract class Service<C extends ServiceConsumer> {
      * @param executor Custom thread pool threadPoolExecutor.
      * @return Runnable's future.
      */
-    protected final Future fork(Runnable runnable, String executorName, ThreadPoolExecutor executor) {
+    protected final Future fork(Runnable runnable, String executorName, ExecutorService executor) {
         registerExecutor(executorName, executor);
         return executor.submit(new RunnableWrapper(runnable, getSession(), getInvokerProperties()));
     }
@@ -191,7 +187,7 @@ public abstract class Service<C extends ServiceConsumer> {
      * when the process try to finalize the registered thread pool executors.
      * @param executor Thread pool threadPoolExecutor to finalize.
      */
-    protected void shutdownExecutor(ThreadPoolExecutor executor) {
+    protected void shutdownExecutor(ExecutorService executor) {
         long shutdownTimeout = SystemProperties.getLong(SystemProperties.Service.SHUTDOWN_TIME_OUT);
 
         //In the first attempt the shutdown procedure wait for all the thread
@@ -550,63 +546,4 @@ public abstract class Service<C extends ServiceConsumer> {
 
     }
 
-    public interface ThreadPoolAgentMBean {
-
-        long getActiveCount();
-        long getCompletedTaskCount();
-        long getTaskCount();
-        int getCorePoolSize();
-        int getMaximumPoolSize();
-        int getLargestPoolSize();
-        int getPoolSize();
-
-    }
-
-    public static class ThreadPoolAgent extends Agent implements ThreadPoolAgentMBean {
-
-        private static final String PACKAGE_NAME = Service.class.getPackageName();
-
-        private final ThreadPoolExecutor threadPoolExecutor;
-
-        public ThreadPoolAgent(String name, ThreadPoolExecutor threadPoolExecutor) {
-            super(name, PACKAGE_NAME);
-            this.threadPoolExecutor = threadPoolExecutor;
-        }
-
-        @Override
-        public long getActiveCount() {
-            return threadPoolExecutor.getActiveCount();
-        }
-
-        @Override
-        public long getCompletedTaskCount() {
-            return threadPoolExecutor.getCompletedTaskCount();
-        }
-
-        @Override
-        public long getTaskCount() {
-            return threadPoolExecutor.getTaskCount();
-        }
-
-        @Override
-        public int getCorePoolSize() {
-            return threadPoolExecutor.getCorePoolSize();
-        }
-
-        @Override
-        public int getMaximumPoolSize() {
-            return threadPoolExecutor.getMaximumPoolSize();
-        }
-
-        @Override
-        public int getLargestPoolSize() {
-            return threadPoolExecutor.getLargestPoolSize();
-        }
-
-        @Override
-        public int getPoolSize() {
-            return threadPoolExecutor.getPoolSize();
-        }
-
-    }
 }
