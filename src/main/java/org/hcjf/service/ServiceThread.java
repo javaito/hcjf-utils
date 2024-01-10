@@ -1,10 +1,13 @@
 package org.hcjf.service;
 
 import com.sun.management.ThreadMXBean;
+import org.hcjf.errors.HCJFRuntimeException;
 import org.hcjf.log.Log;
 import org.hcjf.properties.SystemProperties;
+import org.hcjf.utils.LruMap;
 
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,15 +26,24 @@ public class ServiceThread {
         serviceThreadInstances = new HashMap<>();
     }
 
-    private Long threadId;
+    private final Long threadId;
     private ServiceSession session;
     private Long initialAllocatedMemory;
     private Long maxAllocatedMemory;
     private Long initialTime;
     private Long maxExecutionTime;
 
-    public ServiceThread(Long threadId) {
-        this.threadId = threadId;
+    public ServiceThread(ServiceThread serviceThread) {
+        this.threadId = serviceThread.threadId;
+        this.session = serviceThread.session;
+        this.initialAllocatedMemory = serviceThread.initialAllocatedMemory;
+        this.maxAllocatedMemory = serviceThread.maxAllocatedMemory;
+        this.initialTime = serviceThread.initialTime;
+        this.maxExecutionTime = serviceThread.maxExecutionTime;
+    }
+
+    public ServiceThread() {
+        this.threadId = Thread.currentThread().threadId();
     }
 
     /**
@@ -165,14 +177,42 @@ public class ServiceThread {
      * @return Service thread instance.
      */
     public static synchronized ServiceThread getServiceThreadInstance() {
+        return getServiceThreadInstance(ServiceThread.class);
+    }
+
+    /**
+     * Returns a new service thread instance for the current thread.
+     * @param serviceThreadClass Service thread class
+     * @return Service thread instance.
+     * @param <S> Expected service thread instance.
+     */
+    public static synchronized <S extends ServiceThread> S getServiceThreadInstance(Class<S> serviceThreadClass) {
         Long threadId = Thread.currentThread().threadId();
         ServiceThread instance = serviceThreadInstances.get(threadId);
         if (instance == null) {
-            instance = new ServiceThread(threadId);
+            // In this case there aren't any instance for this thread then we need to create a base instance for this
+            // thread id.
+            try {
+                instance = serviceThreadClass.getConstructor().newInstance();
+            } catch (Exception e) {
+                throw new HCJFRuntimeException("Unable to create service thread instance (%s)", serviceThreadClass.getName());
+            }
             serviceThreadInstances.put(threadId, instance);
+        } else if (!instance.getClass().equals(serviceThreadClass)) {
+            // In this case the instance of service thread is not the same that we need then we need to create a new
+            // service thread instance using previous instance as base.
+            try {
+                instance = serviceThreadClass.getConstructor(ServiceThread.class).newInstance(instance);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new HCJFRuntimeException("Unable to create service thread instance (%s)", serviceThreadClass.getName());
+            }
+            serviceThreadInstances.put(threadId, instance);
+        }
+        if (instance.getSession() == null) {
             instance.setSession(ServiceSession.getGuestSession());
         }
-        return instance;
+        return (S) instance;
     }
 
     /**

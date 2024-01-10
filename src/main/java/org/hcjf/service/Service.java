@@ -40,16 +40,7 @@ public abstract class Service<C extends ServiceConsumer> {
 
         this.serviceName = serviceName;
         this.priority = priority;
-        if (!SystemProperties.getBoolean(SystemProperties.Service.VIRTUAL_THREAD_POOL)) {
-
-            ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-            threadPoolExecutor.setCorePoolSize(SystemProperties.getInteger(SystemProperties.Service.THREAD_POOL_CORE_SIZE));
-            threadPoolExecutor.setMaximumPoolSize(SystemProperties.getInteger(SystemProperties.Service.THREAD_POOL_MAX_SIZE));
-            threadPoolExecutor.setKeepAliveTime(SystemProperties.getLong(SystemProperties.Service.THREAD_POOL_KEEP_ALIVE_TIME), TimeUnit.SECONDS);
-            this.serviceExecutor = threadPoolExecutor;
-        } else {
-            this.serviceExecutor = Executors.newVirtualThreadPerTaskExecutor();
-        }
+        this.serviceExecutor = createExecutorService();
         this.registeredExecutors = new HashMap<>();
         init();
         if(!getClass().equals(Log.class)) {
@@ -57,6 +48,40 @@ public abstract class Service<C extends ServiceConsumer> {
         } else {
             SystemServices.instance.setLog((Log)this);
         }
+    }
+
+    /**
+     * Creates an instance of executor service using defaults parameters.
+     * @return Executor service instance.
+     */
+    protected ExecutorService createExecutorService() {
+        return createExecutorService(
+                SystemProperties.getInteger(SystemProperties.Service.THREAD_POOL_CORE_SIZE),
+                SystemProperties.getInteger(SystemProperties.Service.THREAD_POOL_MAX_SIZE),
+                SystemProperties.getLong(SystemProperties.Service.THREAD_POOL_KEEP_ALIVE_TIME)
+        );
+    }
+
+    /**
+     * Creates an instance of executor service
+     * @param corePoolSize Core pool size
+     * @param maximumPoolSize Maximum pool size
+     * @param keepAliveTime Keep alive time
+     * @return Executor service instance.
+     */
+    protected ExecutorService createExecutorService(Integer corePoolSize, Integer maximumPoolSize, Long keepAliveTime) {
+        ExecutorService result;
+        if (!SystemProperties.getBoolean(SystemProperties.Service.VIRTUAL_THREAD_POOL)) {
+            ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+            threadPoolExecutor.setCorePoolSize(corePoolSize);
+            threadPoolExecutor.setMaximumPoolSize(maximumPoolSize);
+            threadPoolExecutor.setKeepAliveTime(keepAliveTime, TimeUnit.SECONDS);
+            result = threadPoolExecutor;
+        } else {
+            result = Executors.newVirtualThreadPerTaskExecutor();
+            System.out.println("Virtual thread executor for service");
+        }
+        return result;
     }
 
     /**
