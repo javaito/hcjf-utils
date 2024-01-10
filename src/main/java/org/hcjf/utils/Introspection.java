@@ -420,8 +420,6 @@ public final class Introspection {
      * @param getterName Specific getter name.
      * @param <O> Expected result type.
      * @return Return the value that is a result of the specific getter method.
-     * @throws InvocationTargetException Invocation target exception.
-     * @throws IllegalAccessException Illegal access exception.
      */
     public static <O extends Object> O get(Object instance, String getterName) {
         return getGetters(instance.getClass()).get(getterName).get(instance);
@@ -432,8 +430,6 @@ public final class Introspection {
      * @param instance Instance to invoke each of getters.
      * @param getters Specific getter names.
      * @return Return a list with each of the results.
-     * @throws InvocationTargetException Invocation target exception.
-     * @throws IllegalAccessException Illegal access exception.
      */
     public static List get(Object instance, String... getters) {
         List result = new ArrayList();
