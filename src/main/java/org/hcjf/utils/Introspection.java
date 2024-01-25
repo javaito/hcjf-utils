@@ -11,6 +11,10 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -739,14 +743,18 @@ public final class Introspection {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             String path = packageName.replace(Strings.CLASS_SEPARATOR, Strings.SLASH);
             Enumeration<URL> resources = classLoader.getResources(path);
-            List<File> folders = new ArrayList<>();
+            List<Class<?>> classes = new ArrayList<>();
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
-                folders.add(new File(resource.getFile()));
-            }
-            List<Class<?>> classes = new ArrayList<>();
-            for (File directory : folders) {
-                classes.addAll(findClasses(directory, packageName));
+                String resourcePath = resource.getPath();
+                if(resourcePath.contains(".jar")){
+                    resourcePath = resourcePath.replace("file:", "").split("!")[0];
+                    try(FileSystem fs = FileSystems.newFileSystem(Path.of(resourcePath))){
+                        classes.addAll(findClasses(fs.getPath(resourcePath), path, packageName));
+                    };
+                } else {
+                    classes.addAll(findClasses(Path.of(resourcePath), resourcePath, packageName));
+                }
             }
             return classes;
         } catch (Exception ex) {
@@ -755,27 +763,28 @@ public final class Introspection {
     }
 
     /**
-     * Recursive method used to find all classes in a given folder and sub-folders.
-     * @param folder Base folder
+     * Recursive method used to find all classes in a given path and the sub paths.
+     * @param basePath to start the search
+     * @param path The path to search in the basePath FS 
      * @param packageName The package name for classes found inside the base folder
      * @return List with all the classes founded into the package
+     * @throws IOException 
      */
-    private static List findClasses(File folder, String packageName) {
+    private static List findClasses(Path basePath, String path, String packageName) throws IOException  {
         List classes = new ArrayList();
-        if (!folder.exists()) {
-            return classes;
-        }
-        File[] files = folder.listFiles();
-        for (File file : files) {
-            if (file.isDirectory()) {
-                assert !file.getName().contains(".");
-                classes.addAll(findClasses(file, packageName + "." + file.getName()));
-            } else if (file.getName().endsWith(".class")) {
+        Files.list(basePath.getFileSystem().getPath(path)).forEach(filePath -> {
+            String name = filePath.getFileName().toString();
+            if (Files.isDirectory(filePath)) {
+                assert !name.contains(".");
                 try {
-                    classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6)));
+                    classes.addAll(findClasses(basePath, path + "/" + name, packageName + "." + name));
+                } catch (IOException e) {}
+            } else if (name.endsWith(".class")) {
+                try {
+                    classes.add(Class.forName(packageName + '.' + name.substring(0, name.length() - 6)));
                 } catch (Exception ex){}
             }
-        }
+        });
         return classes;
     }
 
